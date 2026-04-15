@@ -1,0 +1,38 @@
+name: Compilar Executavel Windows
+
+on:
+  push:
+    branches: [ "main" ] # Altere para "master" se a sua branch principal tiver esse nome
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout do codigo
+      uses: actions/checkout@v4
+
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Configurar Motor Visual (Flutter)
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Instalar Bibliotecas
+      run: |
+        pip install -r requirements.txt
+        
+    - name: Construir o Programa (.exe)
+      run: |
+        flet build windows
+        
+    - name: Disponibilizar para Download
+      uses: actions/upload-artifact@v4
+      with:
+        name: Holerite_DHL_Windows
+        path: build/windows/
+
