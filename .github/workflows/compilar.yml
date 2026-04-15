@@ -2,11 +2,15 @@ name: Compilar Executavel Windows
 
 on:
   push:
-    branches: [ "main" ] # Altere para "master" se a sua branch principal tiver esse nome
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: windows-latest
+    
+    # [span_2](start_span)[span_3](start_span)Esta seção corrige o erro de UnicodeEncodeError (charmap)[span_2](end_span)[span_3](end_span)
+    env:
+      PYTHONUTF8: 1
 
     steps:
     - name: Checkout do codigo
