@@ -25,9 +25,9 @@ jobs:
         pip install pyinstaller
         
     - name: Construir o Programa (.exe)
-      # Geramos o executável de janela única (onefile) e sem console preto atrás
+      # Aqui está o segredo: usamos o PyInstaller diretamente para criar o arquivo único
       run: |
-        flet pack main.py --name "Holerite_Pro_DHL" --onefile --noconsole
+        pyinstaller --noconsole --onefile --name "Holerite_Pro_DHL" main.py
         
     - name: Disponibilizar para Download
       uses: actions/upload-artifact@v4
