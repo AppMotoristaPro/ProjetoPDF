@@ -1,16 +1,23 @@
 import os
 import re
 import shutil
+import logging
 from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 
+# Configuração básica do logger para registrar no arquivo
+logging.basicConfig(
+    filename="debug_log.txt",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    encoding="utf-8"
+)
+
 def limpar_nome(nome):
-    """Garante que o nome do arquivo seja aceito pelo Windows."""
     nome_limpo = re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', nome).strip()
     return nome_limpo.upper()
 
 def extrair_nome_da_pagina(texto):
-    """Busca o nome do colaborador pela âncora definida."""
     linhas = texto.split('\n')
     for i, linha in enumerate(linhas):
         if "Nome do Funcionário" in linha:
@@ -18,17 +25,19 @@ def extrair_nome_da_pagina(texto):
     return None
 
 def get_pasta_destino(nome_operacao):
-    """Cria a estrutura de pastas padronizada no PC da Nexus/DHL."""
-    # Usa o caminho oficial do Windows para a pasta Downloads
-    pasta_base = os.path.join(os.environ['USERPROFILE'], 'Downloads')
-    data_hoje = datetime.now().strftime("%d-%m-%Y")
-    pasta_destino = os.path.join(pasta_base, f"Holerites_{nome_operacao}", data_hoje)
-    
-    os.makedirs(pasta_destino, exist_ok=True)
-    return pasta_destino
+    try:
+        pasta_base = os.path.join(os.environ['USERPROFILE'], 'Downloads')
+        data_hoje = datetime.now().strftime("%d-%m-%Y")
+        pasta_destino = os.path.join(pasta_base, f"Holerites_{nome_operacao}", data_hoje)
+        os.makedirs(pasta_destino, exist_ok=True)
+        logging.info(f"Pasta de destino preparada: {pasta_destino}")
+        return pasta_destino
+    except Exception as e:
+        logging.error(f"Erro ao criar pasta: {e}")
+        raise
 
 def processar_holerite_unico(caminho_pdf, nome_operacao):
-    """MÓDULO 1: Fatia um PDF grande em vários pedaços."""
+    logging.info(f"Iniciando MÓDULO MASSA para: {caminho_pdf}")
     pasta_destino = get_pasta_destino(nome_operacao)
     
     try:
@@ -44,29 +53,30 @@ def processar_holerite_unico(caminho_pdf, nome_operacao):
             caminho_arquivo = os.path.join(pasta_destino, f"{nome_final}.pdf")
             with open(caminho_arquivo, "wb") as f:
                 writer.write(f)
+            logging.info(f"Página {i+1} fatiada para: {nome_final}.pdf")
                 
         return True, pasta_destino
     except Exception as e:
+        logging.error(f"Erro no processamento massa: {e}")
         return False, str(e)
 
 def processar_holerites_unitarios(lista_caminhos, nome_operacao):
-    """MÓDULO 2: Lê vários PDFs separados e renomeia copiando para a pasta."""
+    logging.info(f"Iniciando MÓDULO UNITÁRIO para {len(lista_caminhos)} arquivos")
     pasta_destino = get_pasta_destino(nome_operacao)
     
     try:
         for i, caminho_pdf in enumerate(lista_caminhos):
             reader = PdfReader(caminho_pdf)
-            # Lê apenas a primeira página para extrair o nome
             texto = reader.pages[0].extract_text()
             nome_bruto = extrair_nome_da_pagina(texto)
             nome_final = limpar_nome(nome_bruto) if nome_bruto else f"FUNC_DESCONHECIDO_ARQ_{i+1}"
             
             caminho_arquivo = os.path.join(pasta_destino, f"{nome_final}.pdf")
-            
-            # Copia o arquivo original inteiro para o novo destino com o novo nome
             shutil.copy2(caminho_pdf, caminho_arquivo)
+            logging.info(f"Arquivo renomeado: {nome_final}.pdf")
             
         return True, pasta_destino
     except Exception as e:
+        logging.error(f"Erro no processamento unitário: {e}")
         return False, str(e)
 
