@@ -7,8 +7,6 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
-    # [span_2](start_span)[span_3](start_span)Esta seção corrige o erro de UnicodeEncodeError (charmap)[span_2](end_span)[span_3](end_span)
     env:
       PYTHONUTF8: 1
 
@@ -21,22 +19,19 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Configurar Motor Visual (Flutter)
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
-
     - name: Instalar Bibliotecas
       run: |
         pip install -r requirements.txt
+        pip install pyinstaller
         
     - name: Construir o Programa (.exe)
+      # Geramos o executável de janela única (onefile) e sem console preto atrás
       run: |
-        flet build windows
+        flet pack main.py --name "Holerite_Pro_DHL" --onefile --noconsole
         
     - name: Disponibilizar para Download
       uses: actions/upload-artifact@v4
       with:
         name: Holerite_DHL_Windows
-        path: build/windows/
+        path: dist/
 
