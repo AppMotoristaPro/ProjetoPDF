@@ -40,8 +40,14 @@ def main(page: ft.Page):
             page.snack_bar = ft.SnackBar(ft.Text(f"❌ Erro: {msg}"), bgcolor="red", open=True)
         page.update()
 
-    file_picker = ft.FilePicker(on_result=ao_selecionar_arquivos)
+    # --- A CORREÇÃO ESTÁ AQUI ABAIXO ---
+    # Na nova versão do Flet, criamos o FilePicker vazio primeiro...
+    file_picker = ft.FilePicker()
+    # ... e depois conectamos a função de resultado nele!
+    file_picker.on_result = ao_selecionar_arquivos
     page.overlay.append(file_picker)
+    # -----------------------------------
+    
     container_principal = ft.Container()
 
     def mostrar_menu_modos(e=None):
