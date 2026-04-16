@@ -22,9 +22,9 @@ jobs:
     - name: Instalar Bibliotecas
       run: |
         pip install -r requirements.txt
+        pip install pyinstaller
         
     - name: Construir o Programa (.exe)
-      # O Flet Pack puro já lida com o Motor Visual sem travar
       run: |
         flet pack main.py
         
