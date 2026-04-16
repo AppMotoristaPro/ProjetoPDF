@@ -2,11 +2,8 @@ import sys
 import builtins
 import ssl
 
-# A SOLUÇÃO: Desativa a verificação de segurança SSL. 
-# Isso obriga o Python a ignorar o bloqueio do antivírus/firewall corporativo.
+# Desativa a verificação de segurança SSL (bypass do firewall)
 ssl._create_default_https_context = ssl._create_unverified_context
-
-# Prevenção do erro de tela branca do PyInstaller
 builtins.exit = sys.exit 
 
 import flet as ft
@@ -23,7 +20,8 @@ def main(page: ft.Page):
 
     estado = {"modo": None, "operacao": None}
 
-    def ao_selecionar_arquivos(e: ft.FilePickerResultEvent):
+    # CORREÇÃO AQUI: Removemos o "ft.FilePickerResultEvent" que estava dando conflito
+    def ao_selecionar_arquivos(e):
         if not e.files: return
         logging.info(f"Arquivos selecionados para modo {estado['modo']}")
         
