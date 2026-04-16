@@ -1,6 +1,13 @@
 import sys
 import builtins
-builtins.exit = sys.exit # Ensina ao .exe como fechar sem dar tela branca
+import ssl
+
+# A SOLUÇÃO: Desativa a verificação de segurança SSL. 
+# Isso obriga o Python a ignorar o bloqueio do antivírus/firewall corporativo.
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Prevenção do erro de tela branca do PyInstaller
+builtins.exit = sys.exit 
 
 import flet as ft
 import logging
