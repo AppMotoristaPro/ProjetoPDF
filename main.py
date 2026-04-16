@@ -1,3 +1,7 @@
+import sys
+import builtins
+builtins.exit = sys.exit # Ensina ao .exe como fechar sem dar tela branca
+
 import flet as ft
 import logging
 from processador import processar_holerite_unico, processar_holerites_unitarios
@@ -63,7 +67,6 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     try:
-        # Tenta iniciar como janela nativa do Windows
         ft.app(target=main)
     except Exception as e:
         logging.critical(f"ERRO FATAL NO MOTOR VISUAL: {e}")

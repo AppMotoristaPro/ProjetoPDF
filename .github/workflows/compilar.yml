@@ -22,12 +22,11 @@ jobs:
     - name: Instalar Bibliotecas
       run: |
         pip install -r requirements.txt
-        pip install pyinstaller
         
     - name: Construir o Programa (.exe)
-      # Aqui está o segredo: usamos o PyInstaller diretamente para criar o arquivo único
+      # O Flet Pack puro já lida com o Motor Visual sem travar
       run: |
-        pyinstaller --noconsole --onefile --name "Holerite_Pro_DHL" main.py
+        flet pack main.py
         
     - name: Disponibilizar para Download
       uses: actions/upload-artifact@v4
