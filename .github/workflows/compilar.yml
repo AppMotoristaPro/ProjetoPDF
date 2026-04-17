@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: windows-latest
     env:
-      PYTHONUTF8: 1
+      PYTHONUTF8: 1 # Resolve o erro de símbolos/Unicode na compilação
 
     steps:
     - name: Checkout do codigo
@@ -19,26 +19,23 @@ jobs:
       with:
         python-version: '3.12'
 
+    - name: Configurar Motor Visual (Flutter)
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
     - name: Instalar Bibliotecas
       run: |
         pip install -r requirements.txt
-        pip install pyinstaller
-
-    - name: Blindagem Offline (Baixar Motor Visual)
-      # Aqui está a mágica: Rodamos um script rápido que força o download do motor visual.
-      # Assim que ele termina de baixar, o script se encerra sozinho com sucesso.
-      run: |
-        python -c "import flet as ft; import os; ft.app(target=lambda p: os._exit(0))"
-
+        
     - name: Construir o Programa (.exe)
-      # O PyInstaller agora vai achar o motor visual baixado no passo anterior
-      # e vai "cozinhar" ele inteiro dentro de um arquivo único.
+      # flet build cria um executável 100% independente e profissional
       run: |
-        pyinstaller --noconsole --onefile --name "Holerite_Pro_DHL" main.py
-
+        flet build windows
+        
     - name: Disponibilizar para Download
       uses: actions/upload-artifact@v4
       with:
         name: Holerite_DHL_Windows
-        path: dist/
+        path: build/windows/
 
