@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: windows-latest
     env:
-      PYTHONUTF8: 1 # Resolve o erro de símbolos/Unicode na compilação
+      PYTHONUTF8: 1
 
     steps:
     - name: Checkout do codigo
@@ -19,23 +19,19 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Configurar Motor Visual (Flutter)
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
-
     - name: Instalar Bibliotecas
+      # Agora o pyinstaller será instalado SEMPRE, pois está no requirements.txt
       run: |
         pip install -r requirements.txt
         
     - name: Construir o Programa (.exe)
-      # flet build cria um executável 100% independente e profissional
+      # Retornamos ao pack oficial, sem frescuras
       run: |
-        flet build windows
+        flet pack main.py
         
     - name: Disponibilizar para Download
       uses: actions/upload-artifact@v4
       with:
         name: Holerite_DHL_Windows
-        path: build/windows/
+        path: dist/
 

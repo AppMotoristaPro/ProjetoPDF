@@ -1,13 +1,32 @@
 import sys
 import builtins
 import ssl
+import os
+import platform
+
+# Desativa a verificação de segurança SSL (bypass do firewall)
+ssl._create_default_https_context = ssl._create_unverified_context
+builtins.exit = sys.exit 
+
 import flet as ft
 import logging
 from processador import processar_holerite_unico, processar_holerites_unitarios
 
-# Configurações de segurança e sistema para ambiente Windows Corporativo
-ssl._create_default_https_context = ssl._create_unverified_context
-builtins.exit = sys.exit 
+# --- FORÇA O LOG A SER SALVO NA PASTA DOWNLOADS DELA ---
+if platform.system() == "Windows":
+    pasta_downloads = os.path.join(os.environ.get('USERPROFILE', ''), 'Downloads')
+else:
+    pasta_downloads = "Downloads"
+
+caminho_log = os.path.join(pasta_downloads, "debug_log_holerites.txt")
+
+logging.basicConfig(
+    filename=caminho_log,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    encoding="utf-8",
+    force=True # Força essa configuração ser a chefe de todos os arquivos
+)
 
 def main(page: ft.Page):
     logging.info("--- Iniciando Interface Nativa ---")
@@ -19,10 +38,9 @@ def main(page: ft.Page):
 
     estado = {"modo": None, "operacao": None}
 
-    # Função que lida com o resultado da seleção de arquivos
     def ao_selecionar_arquivos(e):
         if not e.files: 
-            logging.info("Seleção de arquivos cancelada pelo usuário.")
+            logging.info("Seleção cancelada pelo usuário.")
             return
             
         logging.info(f"Arquivos selecionados para modo {estado['modo']}")
@@ -41,11 +59,11 @@ def main(page: ft.Page):
             page.snack_bar = ft.SnackBar(ft.Text(f"❌ Erro: {msg}"), bgcolor="red", open=True)
         page.update()
 
-    # REGISTRO DO FILE PICKER: Criamos e adicionamos à página imediatamente
+    # Cria o FilePicker de forma correta e sem cortes
     file_picker = ft.FilePicker()
     file_picker.on_result = ao_selecionar_arquivos
     page.overlay.append(file_picker)
-    page.update() # Força o Windows a reconhecer o FilePicker logo na abertura
+    page.update()
 
     container_principal = ft.Container()
 
@@ -71,17 +89,10 @@ def main(page: ft.Page):
 
     def disparar_picker(op):
         estado["operacao"] = op
-        logging.info(f"Abrindo seletor para operação: {op}")
-        file_picker.pick_files(
-            allow_multiple=(estado["modo"] == "UNITARIO"), 
-            allowed_extensions=["pdf"]
-        )
+        logging.info(f"Disparando picker para {op}")
+        file_picker.pick_files(allow_multiple=(estado["modo"] == "UNITARIO"), allowed_extensions=["pdf"])
 
-    page.add(
-        ft.Text("Nexus/DHL - Holerites", size=26, weight="bold"), 
-        ft.Divider(height=20), 
-        container_principal
-    )
+    page.add(ft.Text("Nexus/DHL - Holerites", size=26, weight="bold"), ft.Divider(height=20), container_principal)
     mostrar_menu_modos()
 
 if __name__ == "__main__":
