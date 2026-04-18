@@ -1,63 +1,82 @@
 import streamlit as st
 from datetime import datetime
-from processador import processar_holerite_massa_zip, processar_holerites_unitarios_zip
+from processador import processar_pacote_holerites
 
-# Configuração da página (deve ser a primeira linha do Streamlit)
-st.set_page_config(page_title="Central de Holerites", page_icon="📄", layout="centered")
+# Configuração da página e Estilo Visual
+st.set_page_config(page_title="Organização de Holerites", page_icon="📑", layout="wide")
 
-# Cabeçalho
-st.title("📄 Central de Holerites - DHL")
-st.write("Ferramenta de processamento e organização de PDF.")
+# CSS para melhorar a aparência
+st.markdown("""
+    <style>
+    .main { background-color: #f8f9fa; }
+    .stButton>button { width: 100%; border-radius: 10px; height: 3em; font-weight: bold; }
+    .stHeader { color: #1e3a8a; }
+    .upload-box { border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+st.title("📑 Organização de Holerites - Thaynara")
+st.write("Selecione os arquivos de cada operação para gerar um pacote único organizado.")
 st.divider()
 
-# Escolha da ferramenta e operação
-modo = st.radio("Escolha a ferramenta:", ["PDF ÚNICO EM MASSA (Fatiador)", "VÁRIOS PDFs INDIVIDUAIS (Renomeador)"])
-operacao = st.selectbox("Selecione a Operação:", ["ITUPEVA", "CABREUVA", "EMBU DAS ARTES"])
+# Menu lateral para trocar de ferramenta
+st.sidebar.header("Ferramentas")
+modo = st.sidebar.radio("Escolha o tipo de entrada:", 
+                       ["PDF ÚNICO POR OPERAÇÃO", "VÁRIOS PDFs POR OPERAÇÃO"])
 
-# Lógica da Interface
-if modo == "PDF ÚNICO EM MASSA (Fatiador)":
-    st.info("Faça o upload do arquivo PDF gigante contendo todos os holerites juntos.")
-    arquivo = st.file_uploader("Arraste ou selecione o PDF", type=["pdf"], accept_multiple_files=False)
+# Estrutura de Colunas para as 3 operações
+st.subheader("📥 Upload dos Arquivos")
+col1, col2, col3 = st.columns(3)
 
-    if arquivo:
-        if st.button("Processar e Fatiar", type="primary"):
-            with st.spinner("Trabalhando... Isso pode levar alguns segundos."):
-                try:
-                    # Roda o processador e recebe o ZIP em memória
-                    zip_pronto = processar_holerite_massa_zip(arquivo, operacao)
-                    st.success("✅ Holerites separados e organizados com sucesso!")
-                    
-                    # Botão nativo para baixar o ZIP
-                    st.download_button(
-                        label="⬇️ Baixar Pasta de Holerites (ZIP)",
-                        data=zip_pronto,
-                        file_name=f"Holerites_{operacao}_{datetime.now().strftime('%d-%m-%Y')}.zip",
-                        mime="application/zip"
-                    )
-                except Exception as e:
-                    st.error(f"Erro ao processar arquivo: {e}")
+arquivos_input = {}
 
+with col1:
+    st.markdown("### 🏢 ITUPEVA")
+    if modo == "PDF ÚNICO POR OPERAÇÃO":
+        arquivos_input["ITUPEVA"] = st.file_uploader("PDF Massa Itupeva", type=["pdf"], key="it_massa")
+    else:
+        arquivos_input["ITUPEVA"] = st.file_uploader("Arquivos Itupeva", type=["pdf"], accept_multiple_files=True, key="it_unit")
+
+with col2:
+    st.markdown("### 🏢 CABREÚVA")
+    if modo == "PDF ÚNICO POR OPERAÇÃO":
+        arquivos_input["CABREUVA"] = st.file_uploader("PDF Massa Cabreúva", type=["pdf"], key="cb_massa")
+    else:
+        arquivos_input["CABREUVA"] = st.file_uploader("Arquivos Cabreúva", type=["pdf"], accept_multiple_files=True, key="cb_unit")
+
+with col3:
+    st.markdown("### 🏢 EMBU DAS ARTES")
+    if modo == "PDF ÚNICO POR OPERAÇÃO":
+        arquivos_input["EMBU"] = st.file_uploader("PDF Massa Embu", type=["pdf"], key="eb_massa")
+    else:
+        arquivos_input["EMBU"] = st.file_uploader("Arquivos Embu", type=["pdf"], accept_multiple_files=True, key="eb_unit")
+
+st.divider()
+
+# Botão de Processamento Centralizado
+tem_arquivo = any(arquivos_input.values())
+
+if tem_arquivo:
+    st.subheader("⚙️ Processamento")
+    if st.button("🚀 PROCESSAR TODOS E GERAR PACOTE ÚNICO", type="primary"):
+        with st.spinner("Organizando arquivos por operação..."):
+            try:
+                is_massa = (modo == "PDF ÚNICO POR OPERAÇÃO")
+                zip_pronto = processar_pacote_holerites(arquivos_input, modo_massa=is_massa)
+                
+                st.success("✅ Tudo pronto! O arquivo abaixo contém as pastas organizadas.")
+                
+                st.download_button(
+                    label="⬇️ BAIXAR TUDO ORGANIZADO (.ZIP)",
+                    data=zip_pronto,
+                    file_name=f"Holerites_Organizados_{datetime.now().strftime('%d-%m-%Y')}.zip",
+                    mime="application/zip"
+                )
+            except Exception as e:
+                st.error(f"Ocorreu um erro no processamento: {e}")
 else:
-    st.info("Faça o upload de vários PDFs individuais. Você pode selecionar dezenas de uma vez.")
-    arquivos = st.file_uploader("Arraste ou selecione os PDFs", type=["pdf"], accept_multiple_files=True)
-
-    if arquivos:
-        if st.button("Renomear e Organizar", type="primary"):
-            with st.spinner(f"Renomeando {len(arquivos)} arquivos..."):
-                try:
-                    # Roda o processador unitário e recebe o ZIP em memória
-                    zip_pronto = processar_holerites_unitarios_zip(arquivos, operacao)
-                    st.success("✅ Holerites renomeados com sucesso!")
-                    
-                    st.download_button(
-                        label="⬇️ Baixar Pasta de Holerites (ZIP)",
-                        data=zip_pronto,
-                        file_name=f"Holerites_{operacao}_{datetime.now().strftime('%d-%m-%Y')}.zip",
-                        mime="application/zip"
-                    )
-                except Exception as e:
-                    st.error(f"Erro ao processar arquivos: {e}")
+    st.warning("Aguardando o upload de pelo menos um arquivo para iniciar.")
 
 st.divider()
-st.caption("Nexus - Sistema Seguro. Nenhum arquivo fica salvo no servidor após o processamento.")
+st.caption("🛡️ Por segurança, nenhum arquivo fica salvo após o processamento.")
 

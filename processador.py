@@ -17,48 +17,46 @@ def extrair_nome_da_pagina(texto):
             return linhas[i-1].strip()
     return None
 
-def processar_holerite_massa_zip(arquivo_upload, nome_operacao):
-    """Recebe o PDF gigante, fatia e devolve um arquivo .zip na memória."""
-    zip_buffer = io.BytesIO() # Cria um espaço na memória para o ZIP
-    data_hoje = datetime.now().strftime("%d-%m-%Y")
-    pasta_base = f"Holerites_{nome_operacao}_{data_hoje}/"
-
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        reader = PdfReader(arquivo_upload)
-        for i, pagina in enumerate(reader.pages):
-            texto = pagina.extract_text()
-            nome_bruto = extrair_nome_da_pagina(texto)
-            nome_final = limpar_nome(nome_bruto) if nome_bruto else f"DESCONHECIDO_PAG_{i+1}"
-
-            writer = PdfWriter()
-            writer.add_page(pagina)
-
-            # Escreve a nova página em um PDF na memória
-            pdf_buffer = io.BytesIO()
-            writer.write(pdf_buffer)
-
-            # Adiciona o PDF virtual para dentro do ZIP
-            zip_file.writestr(f"{pasta_base}{nome_final}.pdf", pdf_buffer.getvalue())
-
-    zip_buffer.seek(0)
-    return zip_buffer
-
-def processar_holerites_unitarios_zip(lista_uploads, nome_operacao):
-    """Recebe vários PDFs individuais, lê os nomes e devolve um .zip organizado."""
+def processar_pacote_holerites(arquivos_por_operacao, modo_massa=True):
+    """
+    arquivos_por_operacao: Dicionário {'ITUPEVA': file, 'CABREUVA': file, ...}
+    modo_massa: True se for PDF único por op, False se for lista de arquivos por op.
+    """
     zip_buffer = io.BytesIO()
     data_hoje = datetime.now().strftime("%d-%m-%Y")
-    pasta_base = f"Holerites_{nome_operacao}_{data_hoje}/"
-
+    
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for i, arquivo in enumerate(lista_uploads):
-            reader = PdfReader(arquivo)
-            texto = reader.pages[0].extract_text()
-            nome_bruto = extrair_nome_da_pagina(texto)
-            nome_final = limpar_nome(nome_bruto) if nome_bruto else f"DESCONHECIDO_ARQ_{i+1}"
-
-            # Reseta o cursor do arquivo e salva o original com o novo nome no ZIP
-            arquivo.seek(0)
-            zip_file.writestr(f"{pasta_base}{nome_final}.pdf", arquivo.read())
+        for operacao, arquivo_ou_lista in arquivos_por_operacao.items():
+            if not arquivo_ou_lista:
+                continue
+                
+            # Define a subpasta dentro do ZIP
+            pasta_operacao = f"Holerites_{operacao}_{data_hoje}/"
+            
+            # Se for Modo Massa (PDF único com várias páginas)
+            if modo_massa:
+                reader = PdfReader(arquivo_ou_lista)
+                for i, pagina in enumerate(reader.pages):
+                    texto = pagina.extract_text()
+                    nome_bruto = extrair_nome_da_pagina(texto)
+                    nome_final = limpar_nome(nome_bruto) if nome_bruto else f"PAGINA_{i+1}"
+                    
+                    writer = PdfWriter()
+                    writer.add_page(pagina)
+                    pdf_out = io.BytesIO()
+                    writer.write(pdf_out)
+                    zip_file.writestr(f"{pasta_operacao}{nome_final}.pdf", pdf_out.getvalue())
+            
+            # Se for Modo Unitário (Vários arquivos individuais)
+            else:
+                for i, arquivo in enumerate(arquivo_ou_lista):
+                    reader = PdfReader(arquivo)
+                    texto = reader.pages[0].extract_text()
+                    nome_bruto = extrair_nome_da_pagina(texto)
+                    nome_final = limpar_nome(nome_bruto) if nome_bruto else f"ARQUIVO_{i+1}"
+                    
+                    arquivo.seek(0)
+                    zip_file.writestr(f"{pasta_operacao}{nome_final}.pdf", arquivo.read())
 
     zip_buffer.seek(0)
     return zip_buffer
