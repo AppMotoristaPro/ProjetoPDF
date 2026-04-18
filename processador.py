@@ -47,7 +47,7 @@ def processar_pacote_holerites(arquivos_por_operacao, modo_massa=True):
                     writer.write(pdf_out)
                     zip_file.writestr(f"{pasta_operacao}{nome_final}.pdf", pdf_out.getvalue())
             
-            # Se for Modo Unitário (Vários arquivos individuais)
+            # Se for Modo Unitárioo (Vários arquivos individuais)
             else:
                 for i, arquivo in enumerate(arquivo_ou_lista):
                     reader = PdfReader(arquivo)
