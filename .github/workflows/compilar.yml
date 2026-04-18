@@ -20,12 +20,11 @@ jobs:
         python-version: '3.12'
 
     - name: Instalar Bibliotecas
-      # Agora o pyinstaller será instalado SEMPRE, pois está no requirements.txt
       run: |
         pip install -r requirements.txt
         
     - name: Construir o Programa (.exe)
-      # Retornamos ao pack oficial, sem frescuras
+      # Simples, seguro e empacota tudo que precisamos para rodar localmente
       run: |
         flet pack main.py
         
