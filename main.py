@@ -1,6 +1,12 @@
 import sys
 import os
+import builtins
 import platform
+
+# PREVENÇÃO DO ERRO 'exit is not defined' NO MODO EXECUTÁVEL
+builtins.exit = sys.exit
+builtins.quit = sys.exit
+
 import flet as ft
 import logging
 from processador import processar_holerite_unico, processar_holerites_unitarios
@@ -98,7 +104,7 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     try:
-        # A MÁGICA ESTÁ AQUI: Diz ao Flet para abrir no Navegador em vez de criar janela nativa
+        # Abre no Navegador Padrão
         ft.app(target=main, view=ft.AppView.WEB_BROWSER)
     except Exception as e:
         logging.critical(f"ERRO FATAL NO SERVIDOR WEB: {e}")
